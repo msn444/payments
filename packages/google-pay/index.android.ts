@@ -11,6 +11,7 @@ export class GooglePayBtn extends View {
   public cardNetworks: string;
   public authMethods: string;
   public buttonType: GooglePayButtonType;
+  static readyEvent = 'ready';
   static tapEvent = 'tap';
   private _android: android.widget.FrameLayout;
   private _androidViewId: number;
@@ -115,6 +116,7 @@ export class GooglePayBtn extends View {
 
           this._android.addView(view);
           this._android.setVisibility(android.view.View.VISIBLE);
+          this._emit('ready');
         } else {
           console.log('Google Pay is not supported on this device.', args.getException());
           this._android.setVisibility(android.view.View.GONE);
@@ -188,7 +190,17 @@ export class GooglePayBtn extends View {
         }
 
         if (args.allowedPaymentMethods.tokenizationSpecification) {
-          const tokenSpecification = {type: args.allowedPaymentMethods.tokenizationSpecification.type, parameters: {gateway: args.allowedPaymentMethods.tokenizationSpecification.parameters.gateway, gatewayMerchantId: args.allowedPaymentMethods.tokenizationSpecification.parameters.gatewayMerchantId}};
+
+          let parameters;
+
+          if (args.allowedPaymentMethods.tokenizationSpecification.parameters.gateway === 'stripe'){
+              parameters = {gateway: args.allowedPaymentMethods.tokenizationSpecification.parameters.gateway, 'stripe:publishableKey': args.allowedPaymentMethods.tokenizationSpecification.parameters['stripe:publishableKey'], 'stripe:version': args.allowedPaymentMethods.tokenizationSpecification.parameters['stripe:version']};
+          } else {
+              parameters = {gateway: args.allowedPaymentMethods.tokenizationSpecification.parameters.gateway, 'gatewayMerchantId': args.allowedPaymentMethods.tokenizationSpecification.parameters.gatewayMerchantId};
+          }
+
+          let tokenSpecification = {type: args.allowedPaymentMethods.tokenizationSpecification.type, parameters};
+
           paymentMethod['tokenizationSpecification'] = tokenSpecification;
         }
 
